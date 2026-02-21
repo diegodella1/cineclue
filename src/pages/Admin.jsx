@@ -270,6 +270,7 @@ function UsersTab() {
   const [total, setTotal] = useState(0)
   const [sort, setSort] = useState('created_at')
   const [loading, setLoading] = useState(true)
+  const [toggling, setToggling] = useState(null)
 
   const load = useCallback(async (sortBy) => {
     setLoading(true)
@@ -279,6 +280,16 @@ function UsersTab() {
   }, [])
 
   useEffect(() => { load(sort) }, [sort, load])
+
+  const toggleAdmin = async (userId, isAdmin) => {
+    const action = isAdmin ? 'Quitar admin' : 'Hacer admin'
+    if (!confirm(`${action} a este usuario?`)) return
+    setToggling(userId)
+    const { error } = await supabase.rpc('cc_toggle_admin', { p_user_id: userId })
+    if (error) { alert(error.message) }
+    else { await load(sort) }
+    setToggling(null)
+  }
 
   if (loading) return <Loading />
 
@@ -305,7 +316,10 @@ function UsersTab() {
             <div key={u.id} className={`px-3 py-2.5 ${i > 0 ? 'border-t border-dark-border/50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold truncate">{u.display_name} <span className="text-text-secondary font-normal">@{u.username}</span></p>
+                  <p className="text-sm font-bold truncate">
+                    {u.display_name} <span className="text-text-secondary font-normal">@{u.username}</span>
+                    {u.is_admin && <span className="ml-1.5 text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded">admin</span>}
+                  </p>
                   <div className="flex gap-3 text-[10px] text-text-secondary mt-0.5">
                     <span>{rank.icon} {u.elo} ELO</span>
                     <span>Nv {u.level}</span>
@@ -313,9 +327,23 @@ function UsersTab() {
                     <span>{u.total_score} pts</span>
                   </div>
                 </div>
-                <div className="text-right text-[10px] text-text-secondary ml-2">
-                  <p>Racha: {u.streak_current} ({u.streak_best} best)</p>
-                  <p>{u.last_played ? timeAgo(u.last_played) : 'Nunca jugó'}</p>
+                <div className="flex items-center gap-2 ml-2">
+                  <div className="text-right text-[10px] text-text-secondary">
+                    <p>Racha: {u.streak_current} ({u.streak_best} best)</p>
+                    <p>{u.last_played ? timeAgo(u.last_played) : 'Nunca jugó'}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleAdmin(u.id, u.is_admin)}
+                    disabled={toggling === u.id}
+                    className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                      u.is_admin
+                        ? 'border border-error/40 text-error hover:bg-error/10'
+                        : 'border border-dark-border text-text-secondary hover:text-gold hover:border-gold/40'
+                    } disabled:opacity-40`}
+                    title={u.is_admin ? 'Quitar admin' : 'Hacer admin'}
+                  >
+                    {toggling === u.id ? '...' : u.is_admin ? 'Quitar' : 'Admin'}
+                  </button>
                 </div>
               </div>
             </div>
