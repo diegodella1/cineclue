@@ -15,7 +15,7 @@ export async function signIn(email, password) {
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}/cineclue/home` },
+    options: { redirectTo: 'https://raspberrypi.tailfe9ba0.ts.net/cineclue/home' },
   })
   if (error) throw error
   return data
